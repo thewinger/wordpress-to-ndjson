@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "bin": "build/bin/cli.js",
   "author": "Julien <juliencaron@protonmail.com>",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "private": false,
   "scripts": {
     "build": "yarn clean && yarn tsc",
