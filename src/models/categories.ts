@@ -1,12 +1,12 @@
 import axios from 'axios'
+import ora from 'ora'
 
-import { cleanHTML, BASE_PATH } from '../utils/utils'
-import log from '../utils/logger'
+import { cleanHTML, BASE_PATH } from '../utils'
 import { WPCategory, ToCategory } from '../interfaces/Category'
 
 export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
-  // TODO : Loader
-  return categories
+  const loader = ora().start('Categories formatting...')
+  const output: ToCategory[] = categories
     .filter(({ count }) => !!count)
     .map(({ slug, name, description }) => ({
       _type: 'category',
@@ -18,18 +18,21 @@ export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
       },
       description: cleanHTML(description),
     }))
+
+  loader.succeed('Categories formatted')
+  return output
 }
 
 export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
-  // TODO : Loader
   const url = `${siteUrl}${BASE_PATH}/categories?per_page=100`
-  log.info(`Start fetching categories => ${url}`)
+  const loader = ora().start('Fetch Categories...')
 
   try {
     const res = await axios.get<WPCategory[]>(url)
+    loader.succeed('Categories received')
     return res.data
   } catch (error) {
-    log.error(`Failed to fetch categories => ${error.toString()}`)
+    loader.fail(`Failed to fetch categories => ${error.toString()}`)
     return []
   }
 }

@@ -1,15 +1,17 @@
 import axios from 'axios'
+import ora from 'ora'
 
 import {
   cleanHTML,
   BASE_PATH,
   normalizeDateTime,
   stringToBlock,
-} from '../utils/utils'
-import log from '../utils/logger'
+} from '../utils'
 import { WPPost, ToPost, TpPostCategory, MainImage } from '../interfaces/Post'
 import { WPCategory } from '../interfaces/Category'
-import { WPImage, ToImage } from '../interfaces/Media'
+import { WPImage } from '../interfaces/Media'
+
+const logger = ora()
 
 async function getPostCategories(url: string): Promise<TpPostCategory[]> {
   try {
@@ -19,8 +21,7 @@ async function getPostCategories(url: string): Promise<TpPostCategory[]> {
       _type: 'reference',
     }))
   } catch (error) {
-    log.error(`Failed to fetch post categories => ${error.code}`)
-    log.warn(
+    logger.warn(
       `Failed to fetch post categories => ${error.config.url} ${
         error.response.status
       } ${error.response.statusText || ''}`,
@@ -32,21 +33,16 @@ async function getPostCategories(url: string): Promise<TpPostCategory[]> {
 async function getPostImage(url: string): Promise<MainImage | undefined> {
   try {
     const res = await axios.get<WPImage>(url)
-    const {
-      guid: { rendered: guid },
-      caption: { rendered: caption },
-      alt_text,
-    } = res.data
-    // prefix image url for Sanity
-    // https://www.sanity.io/docs/importing-data
+    const { guid, caption, alt_text } = res.data
     return {
       _type: 'mainImage',
-      _sanityAsset: `image@${guid}`,
+      // prefix image url for Sanity => https://www.sanity.io/docs/importing-data
+      _sanityAsset: `image@${guid.rendered}`,
       alt: cleanHTML(alt_text),
-      caption: cleanHTML(caption),
+      caption: cleanHTML(caption.rendered),
     }
   } catch (error) {
-    log.warn(
+    logger.warn(
       `Failed to fetch post image => ${error.config.url} ${
         error.response.status
       } ${error.response.statusText || ''}`,
@@ -76,7 +72,6 @@ async function formatPost({
     title: cleanHTML(title),
     excerpt: cleanHTML(excerpt),
     body: [stringToBlock(cleanHTML(content))],
-    // status,
     mainImage: undefined,
     categories: [],
   }
@@ -105,8 +100,9 @@ async function formatPost({
 }
 
 export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
-  // TODO : Loader
+  const progress = ora().start('Posts formatting...')
   const output = []
+
   for (const node of posts) {
     if (node.status === 'publish') {
       const post = await formatPost(node)
@@ -115,19 +111,21 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
       }
     }
   }
+
+  progress.succeed('Posts formatted')
   return output as ToPost[]
 }
 
 export async function getPosts(siteUrl: string): Promise<WPPost[]> {
-  // TODO : Loader
+  const progress = ora().start('Fetch Posts...')
   const url = `${siteUrl}${BASE_PATH}/posts?per_page=3`
-  log.info(`Start fetching posts => ${url}`)
 
   try {
     const res = await axios.get<WPPost[]>(url)
+    progress.succeed('Posts received')
     return res.data
   } catch (error) {
-    log.error(`Failed to fetch posts => ${error.code}`)
+    progress.fail(`Failed to fetch posts => ${error.code}`)
     return []
   }
 }

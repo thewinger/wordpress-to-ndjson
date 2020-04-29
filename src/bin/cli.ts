@@ -2,12 +2,9 @@
 
 import minimist, { ParsedArgs, Opts } from 'minimist'
 
-import log from '../utils/logger'
-import { checkUrl, writeFile } from '../utils/utils'
+import { checkUrl, writeFile, handleError } from '../utils'
 import { getCategories, formatCategories } from '../models/categories'
 import { getPosts, formatPosts } from '../models/posts'
-
-log.info('CLI Starting...')
 
 interface Argv extends ParsedArgs {
   url?: string
@@ -18,29 +15,20 @@ const options: Opts = {
     u: 'url',
   },
   string: ['url'],
-  //   boolean: [],
 }
 
 const argv: Argv = minimist(process.argv.slice(2), options)
 
-if (checkUrl(argv.url)) {
+if (typeof argv?.url === 'string' && checkUrl(argv.url)) {
   // Transform Categories
-  getCategories(argv.url as string)
+  getCategories(argv.url)
     .then(formatCategories)
-    .then((elements) =>
-      writeFile(elements, 'category.ndjson')
-        .then(log.success)
-        .catch((error) => log.error(error.toString())),
-    )
-    .catch(console.log)
+    .then((elements) => writeFile(elements, 'category.ndjson'))
+    .catch(handleError)
 
   // Transform Posts
-  getPosts(argv.url as string)
+  getPosts(argv.url)
     .then(formatPosts)
-    .then((elements) =>
-      writeFile(elements, 'post.ndjson')
-        .then(log.success)
-        .catch((error) => log.error(error.toString())),
-    )
-    .catch(console.log)
+    .then((elements) => writeFile(elements, 'post.ndjson'))
+    .catch(handleError)
 }

@@ -2,12 +2,18 @@
 import url from 'url'
 import fs from 'fs'
 import path from 'path'
-import { format, formatISO } from 'date-fns'
+import { formatISO } from 'date-fns'
+import ora from 'ora'
 
-import log from './logger'
 import { BlockText } from '../interfaces/Post'
 
+const logger = ora()
+
 export const BASE_PATH = '/wp-json/wp/v2'
+
+export const handleError = (error: Error): void => {
+  logger.fail(error.toString())
+}
 
 export function cleanHTML(html: string): string {
   return (
@@ -39,36 +45,33 @@ export function stringToBlock(str: string): BlockText {
 }
 
 export const checkUrl = (uri?: string): boolean => {
-  log.info('Check URL...')
   if (typeof uri === 'undefined') {
-    log.error('Missing URL')
+    logger.fail('Missing URL')
     return false
   }
   const parsed = url.parse(uri)
   const validUrl = !!parsed.path && !!parsed.host
   if (!validUrl) {
-    log.error('Invalid url format')
+    logger.fail('Invalid url format')
     return false
   }
   return true
 }
 
-export function writeFile<T>(dataArr: T[], fileName: string): Promise<string> {
-  // TODO : Loader
-  log.info(`Start writing in ${fileName}...`)
-  return new Promise((resolve, reject) => {
-    try {
-      const dest = path.join(__dirname, '..', '..', 'files', fileName)
-      const stream = fs.createWriteStream(dest)
-      for (const line of dataArr) {
-        stream.write(`${JSON.stringify(line)}\n`)
-      }
-
-      stream.end(() => resolve(`${fileName} is fully updated!`))
-    } catch (error) {
-      reject(error.toString())
+export function writeFile<T>(dataArr: T[], fileName: string): void {
+  const progress = ora({ text: 'Start..' })
+  progress.start(`Start writing in ${fileName}...`)
+  try {
+    const dest = path.join(__dirname, '..', '..', 'files', fileName)
+    const stream = fs.createWriteStream(dest)
+    for (const line of dataArr) {
+      stream.write(`${JSON.stringify(line)}\n`)
     }
-  })
+
+    stream.end(() => progress.succeed(`${fileName} is fully updated!`))
+  } catch (error) {
+    progress.fail(error.toString())
+  }
 }
 
 export function normalizeDateTime(dateStr: string): string {
