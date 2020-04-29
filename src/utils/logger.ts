@@ -1,22 +1,32 @@
-type MsgType = 'error' | 'info' | 'success'
+import colors from 'chalk'
 
-export default function logger(msg: string, type?: MsgType): void {
-  const message = `[${type}]: ${msg}`
+type MsgType = 'error' | 'info' | 'success' | 'warn'
+
+function logger(msg: string, type?: MsgType): void {
+  const prefix = `[${type || 'info'}]`
   switch (type) {
-    //     case 'error':
-    //         console.error(message)
-    //         break;
+    case 'error':
+      console.log(`${colors.red(prefix)}: ${msg}`)
+      break
 
-    //     case 'info':
-    //         console.info(message)
-    //         break;
+    case 'warn':
+      console.log(`${colors.yellow(prefix)}: ${msg}`)
+      break
 
-    //     case 'success':
-    //         console.log(message)
-    //         break;
+    case 'success':
+      console.log(`${colors.green(prefix)}: ${msg}`)
+      break
 
     default:
-      console.log(message)
+      console.log(`${colors.blue(prefix)}: ${msg}`)
       break
   }
+}
+
+// alias
+export default {
+  error: (msg: string): void => logger(msg, 'error'),
+  warn: (msg: string): void => logger(msg, 'warn'),
+  info: (msg: string): void => logger(msg, 'info'),
+  success: (msg: string): void => logger(msg, 'success'),
 }
