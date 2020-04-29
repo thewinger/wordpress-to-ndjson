@@ -1,15 +1,23 @@
 import axios from 'axios'
 
-import { cleanHTML, BASE_PATH } from '../utils/utils'
+import {
+  cleanHTML,
+  BASE_PATH,
+  normalizeDateTime,
+  stringToBlock,
+} from '../utils/utils'
 import log from '../utils/logger'
-import { WPPost, ToPost } from '../interfaces/Post'
+import { WPPost, ToPost, TpPostCategory, MainImage } from '../interfaces/Post'
 import { WPCategory } from '../interfaces/Category'
 import { WPImage, ToImage } from '../interfaces/Media'
 
-async function getPostCategories(url: string): Promise<string[]> {
+async function getPostCategories(url: string): Promise<TpPostCategory[]> {
   try {
     const res = await axios.get<WPCategory[]>(url)
-    return res.data.map(({ slug }) => slug)
+    return res.data.map(({ slug }) => ({
+      _ref: slug,
+      _type: 'reference',
+    }))
   } catch (error) {
     log.error(`Failed to fetch post categories => ${error.code}`)
     log.warn(
@@ -21,16 +29,22 @@ async function getPostCategories(url: string): Promise<string[]> {
   }
 }
 
-async function getPostImage(url: string): Promise<ToImage | undefined> {
+async function getPostImage(url: string): Promise<MainImage | undefined> {
   try {
     const res = await axios.get<WPImage>(url)
     const {
       guid: { rendered: guid },
+      caption: { rendered: caption },
       alt_text,
     } = res.data
     // prefix image url for Sanity
     // https://www.sanity.io/docs/importing-data
-    return { url: `image@${guid}`, alt: cleanHTML(alt_text) }
+    return {
+      _type: 'mainImage',
+      _sanityAsset: `image@${guid}`,
+      alt: cleanHTML(alt_text),
+      caption: cleanHTML(caption),
+    }
   } catch (error) {
     log.warn(
       `Failed to fetch post image => ${error.config.url} ${
@@ -48,18 +62,22 @@ async function formatPost({
   content: { rendered: content },
   date,
   modified,
-  status,
   ...node
 }: WPPost): Promise<ToPost> {
   let post: ToPost = {
-    slug,
+    _id: slug,
+    _type: 'post',
+    _createdAt: normalizeDateTime(date),
+    _updatedAt: normalizeDateTime(modified),
+    slug: {
+      _type: 'slug',
+      current: slug,
+    },
     title: cleanHTML(title),
     excerpt: cleanHTML(excerpt),
-    content: cleanHTML(content),
-    created: date,
-    updated: modified,
-    status,
-    image: undefined,
+    body: [stringToBlock(cleanHTML(content))],
+    // status,
+    mainImage: undefined,
     categories: [],
   }
 
@@ -79,7 +97,7 @@ async function formatPost({
   if (featured) {
     post = await {
       ...post,
-      image: await getPostImage(featured[0].href),
+      mainImage: await getPostImage(featured[0].href),
     }
   }
 
@@ -90,9 +108,11 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
   // TODO : Loader
   const output = []
   for (const node of posts) {
-    const post = await formatPost(node)
-    if (post) {
-      output.push(post)
+    if (node.status === 'publish') {
+      const post = await formatPost(node)
+      if (post) {
+        output.push(post)
+      }
     }
   }
   return output as ToPost[]
@@ -100,7 +120,7 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
 
 export async function getPosts(siteUrl: string): Promise<WPPost[]> {
   // TODO : Loader
-  const url = `${siteUrl}${BASE_PATH}/posts?per_page=100`
+  const url = `${siteUrl}${BASE_PATH}/posts?per_page=3`
   log.info(`Start fetching posts => ${url}`)
 
   try {

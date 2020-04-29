@@ -25,18 +25,41 @@ export interface TermLink extends Link {
   taxonomy: string
 }
 
+export interface TpPostCategory {
+  _ref: string
+  _type: 'reference'
+}
+
+export interface MainImage {
+  _type: 'mainImage'
+  _sanityAsset: string
+  alt?: string
+  caption?: string
+}
+export interface BlockTextChild {
+  _type: 'span'
+  marks: []
+  text: string
+}
+export interface BlockText {
+  _type: 'block'
+  style: 'normal'
+  children: BlockTextChild[]
+  markDefs: []
+}
+
 export interface ToPost {
-  slug: string
+  _id: string
+  _type: 'post'
+  _createdAt?: string
+  _updatedAt?: string
+  slug: {
+    _type: 'slug'
+    current: string
+  }
   title: string
   excerpt?: string
-  content?: string
-  created: string
-  updated?: string
-  status: string
-  categories?: string[]
-  image?: {
-    url: string
-    title?: string
-    alt?: string
-  }
+  body?: BlockText[]
+  categories?: TpPostCategory[]
+  mainImage?: MainImage
 }

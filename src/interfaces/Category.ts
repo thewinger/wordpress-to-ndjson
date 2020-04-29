@@ -8,7 +8,14 @@ export interface WPCategory {
 }
 
 export interface ToCategory {
+  _id: string
+  _type: 'category'
+  _createdAt?: string
+  _updatedAt?: string
   title: string
-  slug: string
+  slug: {
+    _type: 'slug'
+    current: string
+  }
   description: string
 }

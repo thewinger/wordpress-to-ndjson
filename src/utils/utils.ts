@@ -2,8 +2,10 @@
 import url from 'url'
 import fs from 'fs'
 import path from 'path'
+import { format, formatISO } from 'date-fns'
 
 import log from './logger'
+import { BlockText } from '../interfaces/Post'
 
 export const BASE_PATH = '/wp-json/wp/v2'
 
@@ -16,7 +18,24 @@ export function cleanHTML(html: string): string {
       .replace(/&#(\d+);/g, (_: any, dec: number) => String.fromCharCode(dec))
       // Replace n* newlines by only one newline
       .replace(/\n\s*\n/g, '\n')
+      // Remove the first new line
+      .replace(/^\n/, '')
   )
+}
+
+export function stringToBlock(str: string): BlockText {
+  return {
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {
+        _type: 'span',
+        text: str,
+        marks: [],
+      },
+    ],
+  }
 }
 
 export const checkUrl = (uri?: string): boolean => {
@@ -50,4 +69,8 @@ export function writeFile<T>(dataArr: T[], fileName: string): Promise<string> {
       reject(error.toString())
     }
   })
+}
+
+export function normalizeDateTime(dateStr: string): string {
+  return formatISO(new Date(dateStr)) || ''
 }

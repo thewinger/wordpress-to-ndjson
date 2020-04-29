@@ -28,7 +28,7 @@ if (checkUrl(argv.url)) {
   getCategories(argv.url as string)
     .then(formatCategories)
     .then((elements) =>
-      writeFile(elements, 'categories.txt')
+      writeFile(elements, 'category.ndjson')
         .then(log.success)
         .catch((error) => log.error(error.toString())),
     )
@@ -38,7 +38,7 @@ if (checkUrl(argv.url)) {
   getPosts(argv.url as string)
     .then(formatPosts)
     .then((elements) =>
-      writeFile(elements, 'posts.txt')
+      writeFile(elements, 'post.ndjson')
         .then(log.success)
         .catch((error) => log.error(error.toString())),
     )

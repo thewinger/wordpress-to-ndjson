@@ -9,8 +9,13 @@ export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
   return categories
     .filter(({ count }) => !!count)
     .map(({ slug, name, description }) => ({
+      _type: 'category',
+      _id: slug,
       title: cleanHTML(name),
-      slug,
+      slug: {
+        _type: 'slug',
+        current: slug,
+      },
       description: cleanHTML(description),
     }))
 }
