@@ -115,7 +115,6 @@ Actually, your can only fetch posts and post categories. If you want edit the fo
 
 You can copy this repository and adapt this following your business logic or submit a PR ;).
 
-> You can also edit data formatting in `src/posts.js` or `src/categories.js`.
 
 ## To-do
 
