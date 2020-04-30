@@ -29,6 +29,11 @@ export function cleanHTML(html: string): string {
   )
 }
 
+// Remove the last "/"
+export function formatUrl(str: string): string {
+  return str.replace(/\/$/, '')
+}
+
 export function stringToBlock(str: string): BlockText {
   return {
     _type: 'block',
@@ -58,17 +63,16 @@ export const checkUrl = (uri?: string): boolean => {
   return true
 }
 
-export function writeFile<T>(dataArr: T[], fileName: string): void {
-  const progress = ora({ text: 'Start..' })
-  progress.start(`Start writing in ${fileName}...`)
+export function writeFile<T>(documents: T[], dest: string): void {
+  const progress = ora()
+  progress.start(`Writing document...`)
   try {
-    const dest = path.join(__dirname, '..', '..', 'files', fileName)
     const stream = fs.createWriteStream(dest)
-    for (const line of dataArr) {
+    for (const line of documents) {
       stream.write(`${JSON.stringify(line)}\n`)
     }
 
-    stream.end(() => progress.succeed(`${fileName} is fully updated!`))
+    stream.end(() => progress.succeed(`File created at ${dest}`))
   } catch (error) {
     progress.fail(error.toString())
   }

@@ -19,6 +19,7 @@ module.exports = {
     ],
     "rules": {
         "@typescript-eslint/camelcase": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
         "prettier/prettier": "error",
     }
 };

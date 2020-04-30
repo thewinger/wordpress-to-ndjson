@@ -124,7 +124,6 @@ You can copy this repository and adapt this following your business logic or sub
 - Custom sanity.io output format
 - Use `wp-api` instead REST API
 - Authenticated connection to wordPress
-- CLI loader
 - Add unit tests
 
 ## License

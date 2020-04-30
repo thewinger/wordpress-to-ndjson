@@ -1,7 +1,7 @@
 import axios from 'axios'
 import ora from 'ora'
 
-import { cleanHTML, BASE_PATH } from '../utils'
+import { cleanHTML, BASE_PATH, handleError } from '../utils'
 import { WPCategory, ToCategory } from '../interfaces/Category'
 
 export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
@@ -33,6 +33,17 @@ export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
     return res.data
   } catch (error) {
     loader.fail(`Failed to fetch categories => ${error.toString()}`)
+    return []
+  }
+}
+
+export default async function (siteUrl: string): Promise<ToCategory[]> {
+  try {
+    const categories = await getCategories(siteUrl)
+    const formatted = await formatCategories(categories)
+    return formatted
+  } catch (error) {
+    handleError(error)
     return []
   }
 }

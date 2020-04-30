@@ -6,6 +6,7 @@ import {
   BASE_PATH,
   normalizeDateTime,
   stringToBlock,
+  handleError,
 } from '../utils'
 import { WPPost, ToPost, TpPostCategory, MainImage } from '../interfaces/Post'
 import { WPCategory } from '../interfaces/Category'
@@ -126,6 +127,17 @@ export async function getPosts(siteUrl: string): Promise<WPPost[]> {
     return res.data
   } catch (error) {
     progress.fail(`Failed to fetch posts => ${error.code}`)
+    return []
+  }
+}
+
+export default async function (siteUrl: string): Promise<ToPost[]> {
+  try {
+    const posts = await getPosts(siteUrl)
+    const formatted = await formatPosts(posts)
+    return formatted
+  } catch (error) {
+    handleError(error)
     return []
   }
 }
