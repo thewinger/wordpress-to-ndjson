@@ -42,7 +42,7 @@ const cli = async () => {
   const posts = await getPosts(siteUrl)
 
   // Write output
-  writeFile([categories, posts], dest as string)
+  writeFile([...categories, ...posts], dest as string)
 }
 
 cli()

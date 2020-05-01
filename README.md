@@ -120,7 +120,6 @@ You can copy this repository and adapt this following your business logic or sub
 
 - CPT support
 - ACF support
-- HTML parser to [Portable Text](https://github.com/portabletext/portabletext)
 - Custom sanity.io output format
 - Use `wp-api` instead REST API
 - Authenticated connection to wordPress

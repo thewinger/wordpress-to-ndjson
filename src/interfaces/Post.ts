@@ -59,7 +59,7 @@ export interface ToPost {
   }
   title: string
   excerpt?: string
-  body?: BlockText[]
+  body?: any
   categories?: TpPostCategory[]
   mainImage?: MainImage
 }

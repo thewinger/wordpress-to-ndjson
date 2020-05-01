@@ -1,16 +1,11 @@
 import axios from 'axios'
 import ora from 'ora'
 
-import {
-  cleanHTML,
-  BASE_PATH,
-  normalizeDateTime,
-  stringToBlock,
-  handleError,
-} from '../utils'
+import { cleanHTML, BASE_PATH, normalizeDateTime, handleError } from '../utils'
 import { WPPost, ToPost, TpPostCategory, MainImage } from '../interfaces/Post'
 import { WPCategory } from '../interfaces/Category'
 import { WPImage } from '../interfaces/Media'
+import htmlToBlocks from '../utils/htmlToBlocks'
 
 const logger = ora()
 
@@ -72,7 +67,7 @@ async function formatPost({
     },
     title: cleanHTML(title),
     excerpt: cleanHTML(excerpt),
-    body: [stringToBlock(cleanHTML(content))],
+    body: htmlToBlocks(content),
     mainImage: undefined,
     categories: [],
   }
@@ -119,7 +114,7 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
 
 export async function getPosts(siteUrl: string): Promise<WPPost[]> {
   const progress = ora().start('Fetch Posts...')
-  const url = `${siteUrl}${BASE_PATH}/posts?per_page=3`
+  const url = `${siteUrl}${BASE_PATH}/posts?per_page=100`
 
   try {
     const res = await axios.get<WPPost[]>(url)

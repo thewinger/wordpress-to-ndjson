@@ -18,6 +18,7 @@
     "@types/chalk": "^2.2.0",
     "@types/date-fns": "^2.6.0",
     "@types/inquirer": "^6.5.0",
+    "@types/jsdom": "^16.2.1",
     "@types/minimist": "^1.2.0",
     "@types/node": "^13.13.4",
     "@typescript-eslint/eslint-plugin": "^2.30.0",
@@ -30,10 +31,13 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@sanity/base": "^1.149.10",
+    "@sanity/block-tools": "^1.149.4",
     "axios": "^0.19.2",
     "chalk": "^4.0.0",
     "date-fns": "^2.12.0",
     "inquirer": "^7.1.0",
+    "jsdom": "^16.2.2",
     "minimist": "^1.2.5",
     "ora": "^4.0.4"
   },

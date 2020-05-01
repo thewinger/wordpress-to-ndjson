@@ -1,11 +1,8 @@
 /* eslint-disable no-undef */
 import url from 'url'
 import fs from 'fs'
-import path from 'path'
 import { formatISO } from 'date-fns'
 import ora from 'ora'
-
-import { BlockText } from '../interfaces/Post'
 
 const logger = ora()
 
@@ -32,21 +29,6 @@ export function cleanHTML(html: string): string {
 // Remove the last "/"
 export function formatUrl(str: string): string {
   return str.replace(/\/$/, '')
-}
-
-export function stringToBlock(str: string): BlockText {
-  return {
-    _type: 'block',
-    style: 'normal',
-    markDefs: [],
-    children: [
-      {
-        _type: 'span',
-        text: str,
-        marks: [],
-      },
-    ],
-  }
 }
 
 export const checkUrl = (uri?: string): boolean => {
