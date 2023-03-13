@@ -74,7 +74,7 @@ async function downloadImage(
 
   // If image already exists -> return
   if (localFilePath) {
-    console.log(`${filePath} already exists`)
+    console.log(`${localFilePath} already exists`)
     return
   }
 
