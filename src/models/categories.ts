@@ -8,15 +8,14 @@ export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
   const loader = ora().start('Categories formatting...')
   const output: ToCategory[] = categories
     .filter(({ count }) => !!count)
-    .map(({ slug, name, description }) => ({
-      _type: 'category',
+    .map(({ slug, name }) => ({
+      _type: 'tipo',
       _id: slug,
       title: cleanHTML(name),
       slug: {
         _type: 'slug',
         current: slug,
       },
-      description: cleanHTML(description),
     }))
 
   loader.succeed('Categories formatted')
@@ -24,7 +23,7 @@ export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
 }
 
 export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
-  const url = `${siteUrl}${BASE_PATH}/categories?per_page=100`
+  const url = `${siteUrl}${BASE_PATH}/categories?hide_emtpy=false&per_page=100`
   const loader = ora().start('Fetch Categories...')
 
   try {
@@ -32,7 +31,9 @@ export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
     loader.succeed('Categories received')
     return res.data
   } catch (error) {
-    loader.fail(`Failed to fetch categories => ${error.toString()}`)
+    if (error instanceof Error) {
+      loader.fail(`Failed to fetch categories => ${error.toString()}`)
+    }
     return []
   }
 }
@@ -40,10 +41,12 @@ export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
 export default async function (siteUrl: string): Promise<ToCategory[]> {
   try {
     const categories = await getCategories(siteUrl)
-    const formatted = await formatCategories(categories)
+    const formatted = formatCategories(categories)
     return formatted
   } catch (error) {
-    handleError(error)
+    if (error instanceof Error) {
+      handleError(error)
+    }
     return []
   }
 }

@@ -5,16 +5,10 @@ export interface WPPostType {
   guid: Rendered
   modified: string
   modified_gmt: string
+  title: Rendered
   slug: string
   status: string
   type: string
-
-  link: string
-  title: Rendered
-  author: number
-  comment_status: string
-  ping_status: string
-  template: string
 }
 
 export interface Rendered {

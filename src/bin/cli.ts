@@ -1,21 +1,20 @@
 #!/usr/bin/env node
 
-import minimist, { ParsedArgs, Opts } from 'minimist'
-import Inquirer from 'inquirer'
-
 import { checkUrl, writeFile, formatUrl } from '../utils'
+import path from 'path'
 import getCategory from '../models/categories'
 import getPosts from '../models/posts'
-import questions from '../utils/questions'
+import getLocation from '../models/locations'
+import getFeatures from '../models/features'
 
-interface Argv extends ParsedArgs {
+/* interface Argv extends ParsedArgs {
   url?: string
   dest?: string
 }
-
+ */
 const cli = async () => {
   // Get CLI arguments
-  const options: Opts = {
+  /* const options: Opts = {
     alias: {
       u: 'url',
     },
@@ -32,17 +31,23 @@ const cli = async () => {
       }
       return true
     }),
-  )
+  ) */
 
-  const { url, dest } = { ...argv, ...answers }
-
+  const url = 'https://wp.winsrvr.com'
+  /* const url = 'https://inmogolfbonalba.com' */
+  const dest = path.join(__dirname, '..', '..', 'output', `documents.ndjson`)
   // Fetch data
   const siteUrl = formatUrl(url as string)
-  const categories = await getCategory(siteUrl)
+  const tipo = await getCategory(siteUrl)
+  const localizacion = await getLocation(siteUrl)
+  const caracteristicas = await getFeatures(siteUrl)
   const posts = await getPosts(siteUrl)
 
   // Write output
-  writeFile([...categories, ...posts], dest as string)
+  writeFile(
+    [...tipo, ...localizacion, ...caracteristicas, ...posts],
+    dest as string,
+  )
 }
 
 cli()

@@ -10,6 +10,7 @@ const questions: Question[] = [
     name: 'url',
     message: 'WordPress Url',
     validate: checkUrl,
+    default: 'https://wp.winsrvr.com',
   },
   {
     type: 'input',

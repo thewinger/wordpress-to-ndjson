@@ -1,23 +1,30 @@
-import { WPPostType, Rendered, Link } from './common'
+import { WPPostType, Link, Rendered } from './common'
 
 export interface WPPost extends WPPostType {
-  content: Rendered
-  excerpt: Rendered
-  featured_media: number
-  sticky: boolean
-  format: string
-  categories: number[]
-  tags: number[]
   _links: Links
+  categories: number[]
+  location: number[]
+  features: number[]
+  meta: MetaData
 }
 
+export interface MetaData {
+  _statustag: string[]
+  _featured: string[]
+  _price: string[]
+  _housesize: string[]
+  _yearbuilt: string[]
+  _bedrooms: string[]
+  _bathrooms: string[]
+  _comment_area: string[]
+}
 export interface Links {
   self: Link[]
   collection: Link[]
   about: Link[]
   author: Link[]
   replies: Link[]
-  'wp:featuredmedia': Link[]
+  'wp:attachment': Link[]
   'wp:term': TermLink[]
 }
 
@@ -25,17 +32,26 @@ export interface TermLink extends Link {
   taxonomy: string
 }
 
-export interface TpPostCategory {
+export interface ToPostCategory {
   _ref: string
   _type: 'reference'
 }
 
-export interface MainImage {
-  _type: 'mainImage'
-  _sanityAsset: string
-  alt?: string
-  caption?: string
+export interface ToPostLocation {
+  _ref: string
+  _type: 'reference'
 }
+
+export interface ToPostFeatures {
+  _ref: string
+  _type: 'reference'
+}
+
+export interface Imagen {
+  _type: 'imagen'
+  _sanityAsset: string
+}
+
 export interface BlockTextChild {
   _type: 'span'
   marks: []
@@ -49,17 +65,23 @@ export interface BlockText {
 }
 
 export interface ToPost {
-  _id: string
-  _type: 'post'
   _createdAt?: string
+  _id: string
+  _type: 'propiedad'
   _updatedAt?: string
+  bathrooms: number
+  bedrooms: number
+  caracteristicas?: ToPostFeatures[]
+  description: string
+  featured: Boolean
+  images?: Imagen[]
   slug: {
     _type: 'slug'
     current: string
   }
   title: string
-  excerpt?: string
-  body?: any
-  categories?: TpPostCategory[]
-  mainImage?: MainImage
+  operacion: string
+  price: number
+  tipo: ToPostCategory[]
+  localizacion?: ToPostLocation[]
 }

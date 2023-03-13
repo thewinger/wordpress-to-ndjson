@@ -56,7 +56,9 @@ export function writeFile<T>(documents: T[], dest: string): void {
 
     stream.end(() => progress.succeed(`File created at ${dest}`))
   } catch (error) {
-    progress.fail(error.toString())
+    if (error instanceof Error) {
+      progress.fail(error.toString())
+    }
   }
 }
 
