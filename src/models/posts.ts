@@ -72,10 +72,17 @@ async function downloadImage(
   const fileName = `${order}-${path.basename(url)}`
   const localFilePath = path.resolve(__dirname, '..', '..', filePath, fileName)
 
+  // If image already exists -> return
+  if (localFilePath) {
+    console.log(`${filePath} already exists`)
+    return
+  }
+
   if (!fs.existsSync(filePath)) {
     console.log(`${filePath} doesn't exists`)
     fs.mkdirSync(filePath, { recursive: true })
     console.log(`${filePath} created`)
+  } else {
   }
 
   try {
