@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import url from 'url'
 import fs from 'fs'
+import path from 'path'
 import { formatISO } from 'date-fns'
 import ora from 'ora'
 
@@ -47,7 +48,15 @@ export const checkUrl = (uri?: string): boolean => {
 
 export function writeFile<T>(documents: T[], dest: string): void {
   const progress = ora()
+  const filePath = path.dirname(dest)
   progress.start(`Writing document...`)
+
+  if (!fs.existsSync(filePath)) {
+    console.log(`${filePath} doesn't exists`)
+    fs.mkdirSync(filePath, { recursive: true })
+    console.log(`${filePath} created`)
+  }
+
   try {
     const stream = fs.createWriteStream(dest)
     for (const line of documents) {

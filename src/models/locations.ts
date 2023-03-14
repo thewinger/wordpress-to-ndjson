@@ -2,24 +2,59 @@ import axios from 'axios'
 import ora from 'ora'
 
 import { cleanHTML, BASE_PATH, handleError } from '../utils'
-import { WPLocation, ToLocation } from '../interfaces/Location'
+import { WPLocation, ToLocation, LocationParent } from '../interfaces/Location'
 
-export const formatLocation = (location: WPLocation[]): ToLocation[] => {
+async function getParent(id: number): Promise<LocationParent> {
+  const url = 'https://wp.winsrvr.com/wp-json/wp/v2/location/' + id
+  const loader = ora().start('Fetching Parent...' + url)
+  try {
+    const res = await axios.get<WPLocation>(url)
+    loader.succeed('Parent received')
+    return {
+      _ref: `localizacion-${res.data.slug}`,
+      _type: 'reference',
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      loader.warn(`Failed to fetch post Location => ${error.message}`)
+    }
+
+    return {
+      _ref: 'false',
+      _type: 'reference',
+    }
+  }
+}
+
+async function formatLocation({
+  slug,
+  name,
+  parent,
+}: WPLocation): Promise<ToLocation> {
+  let location: ToLocation = {
+    _type: 'localizacion',
+    _id: `localizacion-${slug}`,
+    title: cleanHTML(name),
+    ...(parent > 0 && {
+      parent: await getParent(parent),
+    }),
+  }
+  return location
+}
+
+async function formatLocations(locations: WPLocation[]): Promise<ToLocation[]> {
   const loader = ora().start('Location formatting...')
-  const output: ToLocation[] = location
-    .filter(({ count }) => !!count)
-    .map(({ slug, name }) => ({
-      _type: 'localizacion',
-      _id: slug,
-      title: cleanHTML(name),
-      slug: {
-        _type: 'slug',
-        current: slug,
-      },
-    }))
+  const output = [] as ToLocation[]
 
-  loader.succeed('Location formatted')
-  return output
+  for (const node of locations) {
+    const location = await formatLocation(node)
+    if (location) {
+      output.push(location)
+    }
+  }
+
+  loader.succeed('Locations formatted')
+  return output as ToLocation[]
 }
 
 export async function getLocation(siteUrl: string): Promise<WPLocation[]> {
@@ -41,7 +76,7 @@ export async function getLocation(siteUrl: string): Promise<WPLocation[]> {
 export default async function (siteUrl: string): Promise<ToLocation[]> {
   try {
     const location = await getLocation(siteUrl)
-    const formatted = formatLocation(location)
+    const formatted = await formatLocations(location)
     return formatted
   } catch (error) {
     if (error instanceof Error) {

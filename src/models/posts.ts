@@ -23,7 +23,7 @@ async function getPostCategories(url: string): Promise<ToPostCategory[]> {
   try {
     const res = await axios.get<WPCategory[]>(url)
     return res.data.map(({ slug }) => ({
-      _ref: slug,
+      _ref: `tipo-${slug}`,
       _type: 'reference',
     }))
   } catch (error) {
@@ -38,12 +38,12 @@ async function getPostFeatures(url: string): Promise<ToPostFeatures[]> {
   try {
     const res = await axios.get<WPFeatures[]>(url)
     return res.data.map(({ slug }) => ({
-      _ref: slug,
+      _ref: `caracteristicas-${slug}`,
       _type: 'reference',
     }))
   } catch (error) {
     if (error instanceof Error) {
-      logger.warn(`Failed to fetch post categories => ${error.message}`)
+      logger.warn(`Failed to fetch post caracteristicas => ${error.message}`)
     }
     return []
   }
@@ -53,12 +53,12 @@ async function getPostLocation(url: string): Promise<ToPostLocation[]> {
   try {
     const res = await axios.get<WPLocation[]>(url)
     return res.data.map(({ slug }) => ({
-      _ref: slug,
+      _ref: `localizacion-${slug}`,
       _type: 'reference',
     }))
   } catch (error) {
     if (error instanceof Error) {
-      logger.warn(`Failed to fetch post categories => ${error.message}`)
+      logger.warn(`Failed to fetch post location => ${error.message}`)
     }
     return []
   }
@@ -73,7 +73,7 @@ async function downloadImage(
   const localFilePath = path.resolve(__dirname, '..', '..', filePath, fileName)
 
   // If image already exists -> return
-  if (localFilePath) {
+  if (fs.existsSync(localFilePath)) {
     console.log(`${localFilePath} already exists`)
     return
   }
@@ -82,7 +82,6 @@ async function downloadImage(
     console.log(`${filePath} doesn't exists`)
     fs.mkdirSync(filePath, { recursive: true })
     console.log(`${filePath} created`)
-  } else {
   }
 
   try {
@@ -108,16 +107,16 @@ async function getPostImages(url: string, postSlug: string): Promise<Imagen[]> {
   const moreUrl = url + '&per_page=100'
   try {
     const res = await axios.get<WPImage[]>(moreUrl)
-    res.data.map(({ guid, menu_order }) => {
+    res.data.map(({ source_url, menu_order }) => {
       downloadImage(
-        guid.rendered,
-        `output/assets/${postSlug}/`,
+        source_url,
+        `output/images/${postSlug}/`,
         menu_order.toString(),
       )
     })
-    return res.data.map(({ guid }) => ({
+    return res.data.map(({ source_url }) => ({
       _type: 'imagen',
-      _sanityAsset: `image@${guid.rendered}`,
+      _sanityAsset: `image@${postSlug}${path.basename(source_url)}`,
     }))
   } catch (error) {
     if (error instanceof Error) {
@@ -162,6 +161,13 @@ async function formatPost({
     tipo: [],
     localizacion: [],
     caracteristicas: [],
+  }
+
+  if (node.status !== 'publish') {
+    post = {
+      ...post,
+      _id: `draft.${slug}`,
+    }
   }
 
   // Add categories
@@ -226,9 +232,14 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
 export async function getPosts(siteUrl: string): Promise<WPPost[]> {
   const progress = ora().start('Fetch Posts...')
   const url = `${siteUrl}${BASE_PATH}/properties?per_page=100`
+  const config = {
+    headers: {
+      Authorization: 'Basic YWRtaW46YlBVWiBRc3RkIExsUXMgeHpZZCB3RWhtIDM1WVA=',
+    },
+  }
 
   try {
-    const res = await axios.get<WPPost[]>(url)
+    const res = await axios.get<WPPost[]>(url, config)
     progress.succeed('Posts received')
     return res.data
   } catch (error) {

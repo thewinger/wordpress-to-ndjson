@@ -10,12 +10,8 @@ export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
     .filter(({ count }) => !!count)
     .map(({ slug, name }) => ({
       _type: 'tipo',
-      _id: slug,
+      _id: `tipo-${slug}`,
       title: cleanHTML(name),
-      slug: {
-        _type: 'slug',
-        current: slug,
-      },
     }))
 
   loader.succeed('Categories formatted')
@@ -29,6 +25,7 @@ export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
   try {
     const res = await axios.get<WPCategory[]>(url)
     loader.succeed('Categories received')
+    console.log(res.data.length)
     return res.data
   } catch (error) {
     if (error instanceof Error) {
