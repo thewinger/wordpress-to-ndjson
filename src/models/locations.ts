@@ -63,7 +63,7 @@ export async function getLocation(siteUrl: string): Promise<WPLocation[]> {
 
   try {
     const res = await axios.get<WPLocation[]>(url)
-    loader.succeed('Location received')
+    loader.succeed(`${res.data.length} Locations received`)
     return res.data
   } catch (error) {
     if (error instanceof Error) {

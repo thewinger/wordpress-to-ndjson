@@ -24,6 +24,8 @@ export function cleanHTML(html: string): string {
       .replace(/\n\s*\n/g, '\n')
       // Remove the first new line
       .replace(/^\n/, '')
+      // Remove Privado: in front of title
+      .replace('Privado: ', '')
   )
 }
 

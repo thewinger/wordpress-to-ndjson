@@ -71,6 +71,7 @@ async function downloadImage(
 ): Promise<void> {
   const fileName = `${order}-${path.basename(url)}`
   const localFilePath = path.resolve(__dirname, '..', '..', filePath, fileName)
+  const progress = ora()
 
   // If image already exists -> return
   if (fs.existsSync(localFilePath)) {
@@ -87,13 +88,22 @@ async function downloadImage(
   try {
     const response = await axios.get(encodeURI(url), { responseType: 'stream' })
 
-    console.log('trying', url)
     const w = response.data.pipe(fs.createWriteStream(localFilePath))
-    w.on('data', () => {
-      console.log(`starts ${localFilePath}`)
-    })
-    w.on('finish', () => {
-      console.log(`Successfully downloaded ${localFilePath}`)
+    return new Promise((resolve, reject) => {
+      w.on('data', () => {
+        progress.start(`Downloading ${url}`)
+      })
+      w.on('finish', () => {
+        resolve()
+        progress.succeed(`Successfully downloaded ${url}`)
+      })
+      w.on('close', () => {
+        progress.info(`Ended download of ${url}`)
+      })
+      w.on('error', (error: unknown) => {
+        reject(error)
+        progress.fail(`Error downloading ${url}`)
+      })
     })
   } catch (error) {
     logger.fail(`---> Error con ${url}`)
@@ -104,9 +114,17 @@ async function downloadImage(
 }
 
 async function getPostImages(url: string, postSlug: string): Promise<Imagen[]> {
+  const progress = ora().start('Fetch Images...')
   const moreUrl = url + '&per_page=100'
+  const config = {
+    headers: {
+      Authorization: 'Basic YWRtaW46YlBVWiBRc3RkIExsUXMgeHpZZCB3RWhtIDM1WVA=',
+    },
+  }
+
   try {
-    const res = await axios.get<WPImage[]>(moreUrl)
+    const res = await axios.get<WPImage[]>(moreUrl, config)
+    progress.succeed(`${res.data.length} Images received for ${postSlug}`)
     res.data.map(({ source_url, menu_order }) => {
       downloadImage(
         source_url,
@@ -114,9 +132,11 @@ async function getPostImages(url: string, postSlug: string): Promise<Imagen[]> {
         menu_order.toString(),
       )
     })
-    return res.data.map(({ source_url }) => ({
+    return res.data.map(({ source_url, menu_order }) => ({
       _type: 'imagen',
-      _sanityAsset: `image@${postSlug}${path.basename(source_url)}`,
+      _sanityAsset: `image@file://.images/${postSlug}/${menu_order.toString()}-${path.basename(
+        source_url,
+      )}`,
     }))
   } catch (error) {
     if (error instanceof Error) {
@@ -156,7 +176,7 @@ async function formatPost({
       _type: 'slug',
       current: slug,
     },
-    title: cleanHTML(title),
+    title: cleanHTML(title).toUpperCase(),
     images: [],
     tipo: [],
     localizacion: [],
@@ -240,7 +260,7 @@ export async function getPosts(siteUrl: string): Promise<WPPost[]> {
 
   try {
     const res = await axios.get<WPPost[]>(url, config)
-    progress.succeed('Posts received')
+    progress.succeed(`${res.data.length} Posts received`)
     return res.data
   } catch (error) {
     if (error instanceof Error) {

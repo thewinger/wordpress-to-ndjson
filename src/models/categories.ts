@@ -24,8 +24,7 @@ export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
 
   try {
     const res = await axios.get<WPCategory[]>(url)
-    loader.succeed('Categories received')
-    console.log(res.data.length)
+    loader.succeed(`${res.data.length} Categories received`)
     return res.data
   } catch (error) {
     if (error instanceof Error) {

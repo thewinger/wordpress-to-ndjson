@@ -24,7 +24,7 @@ export async function getFeatures(siteUrl: string): Promise<WPFeatures[]> {
 
   try {
     const res = await axios.get<WPFeatures[]>(url)
-    loader.succeed('Features received')
+    loader.succeed(`${res.data.length} Caracteristicas received`)
     return res.data
   } catch (error) {
     if (error instanceof Error) {
