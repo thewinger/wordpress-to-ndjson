@@ -20,8 +20,8 @@ import { WPImage } from '../interfaces/Media'
 const logger = ora()
 const config = {
   headers: {
-    Authorization: 'Basic YWRtaW46TEZybiA1SEs5IEt6aEMgY0lnOSBKUm5IIFZzc3k=',
-    /* Authorization: 'Basic YWRtaW46UTVvSSBZeElLIE44bmUgV1ExQyAxR0tkIDd1UEo=', */
+    /* Authorization: 'Basic YWRtaW46TEZybiA1SEs5IEt6aEMgY0lnOSBKUm5IIFZzc3k=', // wp.winsrvr */
+    Authorization: 'Basic YWRtaW46UTVvSSBZeElLIE44bmUgV1ExQyAxR0tkIDd1UEo=', // wp-local
   },
 }
 
@@ -135,50 +135,66 @@ async function downloadImage(
   }
 }
 
+function fileExists(filePath: string) {
+  return new Promise((resolve) => {
+    fs.access(filePath, fs.constants.F_OK, (error) => {
+      if (error) {
+        resolve(false)
+      } else {
+        resolve(true)
+      }
+    })
+  })
+}
+
 async function filterImages(postImages: WPImage[]): Promise<WPImage[]> {
   const filteredPostImages = [] as WPImage[]
 
-  for (const image of postImages) {
-    try {
-      const response = await axios.head(image.guid.rendered)
-      if (response.headers['content-length'] > 0) {
+  try {
+    for (let image of postImages) {
+      const imgFullPath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'output',
+        'uploads',
+        image.media_details.file,
+      )
+      /* const imgMenuOrder = image.menu_order */
+      /* const imgDirname = path.dirname(image.media_details.file)  */
+      /* const imgFileName = path.basename(image.media_details.file) */
+
+      if (await fileExists(imgFullPath)) {
+        console.log(`Image at ${imgFullPath} exists`)
         filteredPostImages.push(image)
       }
-    } catch (error) {
-      handleError(error.response.data)
     }
+  } catch (error) {
+    handleError(error.response.data)
   }
 
   return filteredPostImages
 }
 
-async function getPostImages(url: string, postSlug: string): Promise<Imagen[]> {
+async function getPostImages(url: string): Promise<Imagen[]> {
   const moreUrl = url + '&per_page=100&orderby=menu_order&order=asc'
-  // TODO Move try catch just with axios requests
+  let filteredPostImages = [] as WPImage[]
+
   try {
     const res = await axios.get<WPImage[]>(moreUrl, config)
-    const filteredPostImages = await filterImages(res.data)
-    Promise.all(
-      filteredPostImages.map(async ({ guid, menu_order }) => {
-        await downloadImage(
-          guid.rendered,
-          `output/images/${postSlug}/`,
-          menu_order.toString(),
-        )
-      }),
-    )
-    return filteredPostImages.map(({ guid, menu_order }) => ({
-      _type: 'imagen',
-      _sanityAsset: `image@file://./images/${postSlug}/${menu_order.toString()}-${path.basename(
-        guid.rendered,
-      )}`,
-    }))
+    filteredPostImages = await filterImages(res.data)
   } catch (error) {
     if (error instanceof Error) {
       logger.warn(`Failed to fetch post images => ${error.message}`)
     }
-    return []
   }
+
+  return filteredPostImages.map(({ media_details, menu_order }) => ({
+    _type: 'imagen',
+    _sanityAsset: `image@file://./uploads/${path.dirname(
+      media_details.file,
+    )}/${menu_order.toString()}-${path.basename(media_details.file)}`,
+  }))
 }
 
 function booleanFeatured(featured: string): boolean {
@@ -262,7 +278,7 @@ async function formatPost({
     console.log(`we have images`)
     post = {
       ...post,
-      images: await getPostImages(images[0].href, post.slug.current),
+      images: await getPostImages(images[0].href),
     }
   }
   console.log(`Post ${slug} formatted`)
@@ -288,8 +304,8 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
 
 export async function getPosts(siteUrl: string): Promise<WPPost[]> {
   const progress = ora().start('Fetch Posts...')
-  /* const params = '?status=publish,draft,private&per_page=5' */
-  const params = '?status=publish,draft,private'
+  /* const params = '?status=publish,draft,private' */
+  const params = '?status=publish'
   const url = `${siteUrl}${BASE_PATH}/properties${params}`
 
   try {
