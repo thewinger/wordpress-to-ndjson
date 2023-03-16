@@ -69,8 +69,8 @@ export interface ToPost {
   _id: string
   _type: 'propiedad'
   _updatedAt?: string
-  bathrooms: number
-  bedrooms: number
+  bathrooms: string
+  bedrooms: string
   caracteristicas?: ToPostFeatures[]
   description: string
   featured: Boolean
@@ -83,5 +83,5 @@ export interface ToPost {
   operacion: string
   price: number
   tipo: ToPostCategory[]
-  localizacion?: ToPostLocation[]
+  localizacion?: ToPostLocation
 }

@@ -1,5 +1,7 @@
+import { Rendered } from './common'
+
 export interface WPImage {
-  source_url: string
+  guid: Rendered
   media_details: MediaDetails
   menu_order: number
 }

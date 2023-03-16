@@ -10,6 +10,7 @@ const logger = ora()
 export const BASE_PATH = '/wp-json/wp/v2'
 
 export const handleError = (error: Error): void => {
+  console.log(`Eeeeeerror ${error}`)
   logger.fail(error.toString())
 }
 

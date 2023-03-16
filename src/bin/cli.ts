@@ -33,21 +33,25 @@ const cli = async () => {
     }),
   ) */
 
-  const url = 'https://wp.winsrvr.com'
+  const url = 'http://wp-local.local'
+  /* const url = 'https://wp.winsrvr.com' */
   /* const url = 'https://inmogolfbonalba.com' */
   const dest = path.join(__dirname, '..', '..', 'output', `documents.ndjson`)
   // Fetch data
   const siteUrl = formatUrl(url as string)
-  const tipo = await getCategory(siteUrl)
-  const localizacion = await getLocation(siteUrl)
-  const caracteristicas = await getFeatures(siteUrl)
+  /* const tipo = await getCategory(siteUrl) */
+  /* const localizacion = await getLocation(siteUrl) */
+  /* const caracteristicas = await getFeatures(siteUrl) */
   const posts = await getPosts(siteUrl)
 
   // Write output
   writeFile(
-    [...tipo, ...localizacion, ...caracteristicas, ...posts],
+    /* [...tipo, ...localizacion, ...caracteristicas, ...posts], */
+    [...posts],
     dest as string,
   )
+
+  console.log('cli finished')
 }
 
 cli()

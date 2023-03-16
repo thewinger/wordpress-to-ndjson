@@ -9,7 +9,7 @@ async function getParent(id: number): Promise<LocationParent> {
   const loader = ora().start('Fetching Parent...' + url)
   try {
     const res = await axios.get<WPLocation>(url)
-    loader.succeed('Parent received')
+    loader.stop()
     return {
       _ref: `localizacion-${res.data.slug}`,
       _type: 'reference',
