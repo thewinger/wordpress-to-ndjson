@@ -7,13 +7,7 @@ export interface WPImage {
 }
 
 export interface MediaDetails {
-  sizes: MediaDetailsSizes
-}
-
-export interface MediaDetailsSizes {
-  full: {
-    file: string
-  }
+  file: string
 }
 
 export interface ToImage {
