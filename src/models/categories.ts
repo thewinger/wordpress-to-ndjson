@@ -6,13 +6,11 @@ import { WPCategory, ToCategory } from '../interfaces/Category'
 
 export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
   const loader = ora().start('Categories formatting...')
-  const output: ToCategory[] = categories
-    .filter(({ count }) => !!count)
-    .map(({ slug, name }) => ({
-      _type: 'tipo',
-      _id: `tipo-${slug}`,
-      title: cleanHTML(name),
-    }))
+  const output: ToCategory[] = categories.map(({ slug, name }) => ({
+    _type: 'tipo',
+    _id: `tipo-${slug}`,
+    title: cleanHTML(name),
+  }))
 
   loader.succeed('Categories formatted')
   return output

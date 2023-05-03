@@ -6,13 +6,11 @@ import { WPFeatures, ToFeatures } from '../interfaces/Features'
 
 export const formatFeatures = (features: WPFeatures[]): ToFeatures[] => {
   const loader = ora().start('Features formatting...')
-  const output: ToFeatures[] = features
-    .filter(({ count }) => !!count)
-    .map(({ slug, name }) => ({
-      _type: 'caracteristicas',
-      _id: `caracteristicas-${slug}`,
-      title: cleanHTML(name),
-    }))
+  const output: ToFeatures[] = features.map(({ slug, name }) => ({
+    _type: 'caracteristicas',
+    _id: `caracteristicas-${slug}`,
+    title: cleanHTML(name),
+  }))
 
   loader.succeed('Features formatted')
   return output

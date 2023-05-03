@@ -17,6 +17,7 @@ export interface MetaData {
   _bedrooms: string[]
   _bathrooms: string[]
   _comment_area: string[]
+  _propertytype: string[]
 }
 export interface Links {
   self: Link[]
@@ -33,6 +34,11 @@ export interface TermLink extends Link {
 }
 
 export interface ToPostCategory {
+  _ref: string
+  _type: 'reference'
+}
+
+export interface ToPostOperacion {
   _ref: string
   _type: 'reference'
 }
@@ -69,19 +75,21 @@ export interface ToPost {
   _id: string
   _type: 'propiedad'
   _updatedAt?: string
-  bathrooms: string
-  bedrooms: string
+  bathrooms: number
+  bedrooms: number
+  size: number
+  year: number
   caracteristicas?: ToPostFeatures[]
   description: string
-  featured: Boolean
+  featured: boolean
   images?: Imagen[]
   slug: {
     _type: 'slug'
     current: string
   }
   title: string
-  operacion: string
+  operacion: ToPostOperacion
   price: number
-  tipo: ToPostCategory[]
+  tipo: ToPostCategory
   localizacion?: ToPostLocation
 }

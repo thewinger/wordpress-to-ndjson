@@ -39,15 +39,15 @@ const cli = async () => {
   const dest = path.join(__dirname, '..', '..', 'output', `documents.ndjson`)
   // Fetch data
   const siteUrl = formatUrl(url as string)
-  /* const tipo = await getCategory(siteUrl) */
-  /* const localizacion = await getLocation(siteUrl) */
-  /* const caracteristicas = await getFeatures(siteUrl) */
+  const tipo = await getCategory(siteUrl)
+  const localizacion = await getLocation(siteUrl)
+  const caracteristicas = await getFeatures(siteUrl)
   const posts = await getPosts(siteUrl)
 
   // Write output
   writeFile(
-    /* [...tipo, ...localizacion, ...caracteristicas, ...posts], */
-    [...posts],
+    [...tipo, ...localizacion, ...caracteristicas, ...posts],
+    /* [...tipo], */
     dest as string,
   )
 
