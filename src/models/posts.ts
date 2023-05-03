@@ -25,20 +25,42 @@ const config = {
   },
 }
 
-async function getPostCategories(url: string): Promise<ToPostCategory[]> {
+fs.unlink(`log.txt`, (err) => {
+  if (err) throw err
+})
+
+let util = require('util')
+let logFile = fs.createWriteStream('log.txt', { flags: 'a' })
+// Or 'w' to truncate the file every time the process starts.
+let logStdout = process.stdout
+
+console.log = function () {
+  logFile.write(util.format.apply(null, arguments) + '\n')
+  logStdout.write(util.format.apply(null, arguments) + '\n')
+}
+console.error = console.log
+
+async function getPostCategories(
+  url: string,
+  propertyType: string,
+): Promise<ToPostCategory> {
+  let category: ToPostCategory = {
+    _ref: `tipo-${propertyType.toLowerCase()}`,
+    _type: 'reference',
+  }
   try {
     const res = await axios.get<WPCategory[]>(url, config)
     console.log(`categories grabbed`)
-    return res.data.map(({ slug }) => ({
-      _ref: `tipo-${slug}`,
+    return (category = {
+      _ref: `tipo-${res.data[0].slug}`,
       _type: 'reference',
-    }))
+    })
   } catch (error) {
     if (error instanceof Error) {
       logger.warn(`Failed to fetch post categories => ${error.message}`)
     }
-    return []
   }
+  return category
 }
 
 async function getPostFeatures(url: string): Promise<ToPostFeatures[]> {
@@ -89,52 +111,6 @@ async function getPostLocation(
   }
 }
 
-async function downloadImage(
-  url: string,
-  filePath: string,
-  order: string,
-): Promise<void> {
-  const fileName = `${order}-${path.basename(url)}`
-  const localFilePath = path.resolve(__dirname, '..', '..', filePath, fileName)
-
-  // If image already exists -> return
-  if (fs.existsSync(localFilePath)) {
-    console.log(`Path ${localFilePath} exists`)
-    return
-  }
-
-  if (!fs.existsSync(filePath)) {
-    fs.mkdirSync(filePath, { recursive: true })
-  }
-
-  const writer = fs.createWriteStream(localFilePath)
-
-  try {
-    const response = await axios.get(encodeURI(url), {
-      ...config,
-      responseType: 'stream',
-    })
-    return new Promise((resolve, reject) => {
-      response.data
-        .pipe(writer)
-        .on('error', () => {
-          console.log(`Error downloading ${url} --> ${Error}`)
-          /* reject() */
-        })
-        .on('data', () => {
-          /* logger.start(`Downloading ${url}`) */
-        })
-        .on('finish', () => {
-          /* logger.succeed(`Successfully downloaded ${url}`) */
-          resolve()
-        })
-    })
-  } catch (error) {
-    /* logger.fail(`---> Error con ${url}`) */
-    handleError(error)
-  }
-}
-
 function fileExists(filePath: string) {
   return new Promise((resolve) => {
     fs.access(filePath, fs.constants.F_OK, (error) => {
@@ -147,6 +123,14 @@ function fileExists(filePath: string) {
   })
 }
 
+async function copyFile(source: string, target: string) {
+  fs.copyFile(source, target, (err) => {
+    if (err) {
+      console.log(`Error with file: ${source} ---- ${err}`)
+    }
+  })
+}
+
 async function filterImages(postImages: WPImage[]): Promise<WPImage[]> {
   const filteredPostImages = [] as WPImage[]
 
@@ -156,17 +140,26 @@ async function filterImages(postImages: WPImage[]): Promise<WPImage[]> {
         __dirname,
         '..',
         '..',
+        /* 'output', */
+        'uploads',
+        image.media_details.file,
+      )
+      const destFullPath = path.resolve(
+        __dirname,
+        '..',
+        '..',
         'output',
         'uploads',
         image.media_details.file,
       )
-      /* const imgMenuOrder = image.menu_order */
-      /* const imgDirname = path.dirname(image.media_details.file)  */
-      /* const imgFileName = path.basename(image.media_details.file) */
+      console.log(`filtering ${imgFullPath}`)
 
       if (await fileExists(imgFullPath)) {
-        console.log(`Image at ${imgFullPath} exists`)
+        fs.mkdirSync(path.dirname(destFullPath), { recursive: true })
+        await copyFile(imgFullPath, destFullPath)
         filteredPostImages.push(image)
+      } else {
+        console.log(`Image at ${imgFullPath} doesn't exists`)
       }
     }
   } catch (error) {
@@ -189,11 +182,11 @@ async function getPostImages(url: string): Promise<Imagen[]> {
     }
   }
 
-  return filteredPostImages.map(({ media_details, menu_order }) => ({
+  return filteredPostImages.map(({ media_details }) => ({
     _type: 'imagen',
     _sanityAsset: `image@file://./uploads/${path.dirname(
       media_details.file,
-    )}/${menu_order.toString()}-${path.basename(media_details.file)}`,
+    )}/${path.basename(media_details.file)}`,
   }))
 }
 
@@ -218,27 +211,34 @@ async function formatPost({
     _type: 'propiedad',
     _createdAt: normalizeDateTime(date),
     _updatedAt: normalizeDateTime(modified),
-    bathrooms: node.meta._bathrooms[0],
-    bedrooms: node.meta._bedrooms[0],
+    bathrooms: Number(node.meta._bathrooms[0]),
+    bedrooms: Number(node.meta._bedrooms[0]),
     description: node.meta._comment_area[0],
-    price: +node.meta._price[0],
+    price: Number(node.meta._price[0]),
+    size: Number(node.meta._housesize[0]),
+    year: Number(node.meta._yearbuilt[0]),
     featured: booleanFeatured(node.meta._featured[0]),
-    operacion: node.meta._statustag[0].toLowerCase().replace(' ', '-'),
     slug: {
       _type: 'slug',
       current: slug,
     },
     title: cleanHTML(title).toUpperCase(),
     images: [],
-    tipo: [],
+    tipo: { _ref: '', _type: 'reference' },
     localizacion: { _ref: '', _type: 'reference' },
+    operacion: {
+      _ref: `operacion-${node.meta._statustag[0]
+        .toLowerCase()
+        .replace(' ', '-')}`,
+      _type: 'reference',
+    },
     caracteristicas: [],
   }
 
   if (node.status !== 'publish') {
     post = {
       ...post,
-      _id: `draft.${slug}`,
+      _id: `drafts.${slug}`,
     }
   }
 
@@ -249,7 +249,10 @@ async function formatPost({
   if (categories) {
     post = {
       ...post,
-      tipo: await getPostCategories(categories[0].href),
+      tipo: await getPostCategories(
+        categories[0].href,
+        node.meta._propertytype[0],
+      ),
     }
   }
 
@@ -275,7 +278,6 @@ async function formatPost({
   // Add images
   const images = node._links['wp:attachment']
   if (images) {
-    console.log(`we have images`)
     post = {
       ...post,
       images: await getPostImages(images[0].href),
@@ -304,13 +306,15 @@ export async function formatPosts(posts: WPPost[]): Promise<ToPost[]> {
 
 export async function getPosts(siteUrl: string): Promise<WPPost[]> {
   const progress = ora().start('Fetch Posts...')
-  /* const params = '?status=publish,draft,private' */
-  const params = '?status=publish'
+  const params = '?status=publish,draft,private'
+  /* const params = '?status=publish' */
   const url = `${siteUrl}${BASE_PATH}/properties${params}`
 
   try {
     const res = await axios.get<WPPost[]>(url, config)
-    progress.succeed(`${res.data.length} Posts received`)
+    progress.succeed(
+      `<========== ${res.data.length} Posts received ==========>`,
+    )
     return res.data
   } catch (error) {
     if (error instanceof Error) {
