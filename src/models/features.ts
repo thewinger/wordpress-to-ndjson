@@ -9,8 +9,10 @@ export const formatFeatures = (features: WPFeatures[]): ToFeatures[] => {
   const output: ToFeatures[] = features.map(({ slug, name }) => ({
     _type: 'caracteristicas',
     _id: `caracteristicas-${slug}`,
-    title: cleanHTML(name),
-  }))
+    title: {
+      "es": cleanHTML(name),
+      "en": ""
+  }}))
 
   loader.succeed('Features formatted')
   return output

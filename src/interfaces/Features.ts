@@ -10,7 +10,8 @@ export interface WPFeatures {
 export interface ToFeatures {
   _id: string
   _type: 'caracteristicas'
-  _createdAt?: string
-  _updatedAt?: string
-  title: string
+  title: {
+    'es': string
+    'en': string
+  }
 }

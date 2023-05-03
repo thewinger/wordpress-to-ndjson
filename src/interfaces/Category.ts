@@ -9,5 +9,8 @@ export interface WPCategory {
 export interface ToCategory {
   _id: string
   _type: 'tipo'
-  title: string
+  title: {
+    "es": string,
+    "en": string
+  }
 }
