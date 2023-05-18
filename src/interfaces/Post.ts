@@ -54,7 +54,7 @@ export interface ToPostFeatures {
 }
 
 export interface Imagen {
-  _type: 'imagen'
+  _type: 'image'
   _sanityAsset: string
 }
 
@@ -80,7 +80,10 @@ export interface ToPost {
   size: number
   year: number
   caracteristicas?: ToPostFeatures[]
-  description: string
+  description: {
+    en: string
+    es: string
+  }
   featured: boolean
   images?: Imagen[]
   slug: {

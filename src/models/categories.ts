@@ -10,14 +10,14 @@ export const formatCategories = (categories: WPCategory[]): ToCategory[] => {
     _type: 'tipo',
     _id: `tipo-${slug}`,
     title: {
-      "es": cleanHTML(name),
-      "en": ""
-  }}))
+      es: cleanHTML(name),
+      en: `trans-${cleanHTML(name)}`,
+    },
+  }))
 
   loader.succeed('Categories formatted')
   return output
 }
-
 
 export async function getCategories(siteUrl: string): Promise<WPCategory[]> {
   const url = `${siteUrl}${BASE_PATH}/categories?hide_emtpy=false&per_page=100`

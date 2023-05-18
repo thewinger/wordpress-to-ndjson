@@ -1,42 +1,41 @@
 import axios from 'axios'
-import ora from 'ora'
 import fs from 'fs'
+import ora from 'ora'
 import path from 'path'
+import util from 'util'
 
-import { cleanHTML, BASE_PATH, normalizeDateTime, handleError } from '../utils'
-import {
-  WPPost,
-  ToPost,
-  ToPostCategory,
-  Imagen,
-  ToPostFeatures,
-  ToPostLocation,
-} from '../interfaces/Post'
 import { WPCategory } from '../interfaces/Category'
 import { WPFeatures } from '../interfaces/Features'
 import { WPLocation } from '../interfaces/Location'
 import { WPImage } from '../interfaces/Media'
+import {
+  Imagen,
+  ToPost,
+  ToPostCategory,
+  ToPostFeatures,
+  ToPostLocation,
+  WPPost,
+} from '../interfaces/Post'
+import { BASE_PATH, cleanHTML, handleError, normalizeDateTime } from '../utils'
 
 const logger = ora()
 const config = {
   headers: {
     /* Authorization: 'Basic YWRtaW46TEZybiA1SEs5IEt6aEMgY0lnOSBKUm5IIFZzc3k=', // wp.winsrvr */
-    Authorization: 'Basic YWRtaW46UTVvSSBZeElLIE44bmUgV1ExQyAxR0tkIDd1UEo=', // wp-local
+    Authorization: 'Basic YWRtaW46UHFTbiBWbTBqIFZ3ZTAgREE0NCBnS1czIEJtZ2I=', // wp-local
   },
 }
 
-fs.unlink(`log.txt`, (err) => {
+fs.unlink(`output.log`, (err) => {
   if (err) throw err
 })
 
-let util = require('util')
-let logFile = fs.createWriteStream('log.txt', { flags: 'a' })
-// Or 'w' to truncate the file every time the process starts.
-let logStdout = process.stdout
+const logFile = fs.createWriteStream('log.txt', { flags: 'w' })
+const logStdout = process.stdout
 
-console.log = function () {
-  logFile.write(util.format.apply(null, arguments) + '\n')
-  logStdout.write(util.format.apply(null, arguments) + '\n')
+console.log = function (d) {
+  logFile.write(util.format(d) + '\n')
+  logStdout.write(util.format(d) + '\n')
 }
 console.error = console.log
 
@@ -112,6 +111,7 @@ async function getPostLocation(
 }
 
 function fileExists(filePath: string) {
+  // eslint-disable-next-line no-undef
   return new Promise((resolve) => {
     fs.access(filePath, fs.constants.F_OK, (error) => {
       if (error) {
@@ -135,7 +135,7 @@ async function filterImages(postImages: WPImage[]): Promise<WPImage[]> {
   const filteredPostImages = [] as WPImage[]
 
   try {
-    for (let image of postImages) {
+    for (const image of postImages) {
       const imgFullPath = path.resolve(
         __dirname,
         '..',
@@ -152,18 +152,21 @@ async function filterImages(postImages: WPImage[]): Promise<WPImage[]> {
         'uploads',
         image.media_details.file,
       )
-      console.log(`filtering ${imgFullPath}`)
+      /* console.log(`filtering ${imgFullPath}`) */
 
       if (await fileExists(imgFullPath)) {
         fs.mkdirSync(path.dirname(destFullPath), { recursive: true })
         await copyFile(imgFullPath, destFullPath)
         filteredPostImages.push(image)
+        console.log(`image ${imgFullPath} copied`)
       } else {
         console.log(`Image at ${imgFullPath} doesn't exists`)
       }
     }
   } catch (error) {
-    handleError(error.response.data)
+    if (error instanceof Error) {
+      handleError(error)
+    }
   }
 
   return filteredPostImages
@@ -183,7 +186,7 @@ async function getPostImages(url: string): Promise<Imagen[]> {
   }
 
   return filteredPostImages.map(({ media_details }) => ({
-    _type: 'imagen',
+    _type: 'image',
     _sanityAsset: `image@file://./uploads/${path.dirname(
       media_details.file,
     )}/${path.basename(media_details.file)}`,
@@ -213,7 +216,10 @@ async function formatPost({
     _updatedAt: normalizeDateTime(modified),
     bathrooms: Number(node.meta._bathrooms[0]),
     bedrooms: Number(node.meta._bedrooms[0]),
-    description: node.meta._comment_area[0],
+    description: {
+      es: node.meta._comment_area[0],
+      en: `trans-${node.meta._comment_area[0]}`,
+    },
     price: Number(node.meta._price[0]),
     size: Number(node.meta._housesize[0]),
     year: Number(node.meta._yearbuilt[0]),
@@ -309,6 +315,7 @@ export async function getPosts(siteUrl: string): Promise<WPPost[]> {
   const params = '?status=publish,draft,private'
   /* const params = '?status=publish' */
   const url = `${siteUrl}${BASE_PATH}/properties${params}`
+  console.log(url)
 
   try {
     const res = await axios.get<WPPost[]>(url, config)
@@ -318,7 +325,8 @@ export async function getPosts(siteUrl: string): Promise<WPPost[]> {
     return res.data
   } catch (error) {
     if (error instanceof Error) {
-      progress.fail(`Failed to fetch posts => ${error.message}`)
+      progress.fail(`
+        Failed to fetch posts => ${error.message} - ${error.name} `)
     }
     return []
   }

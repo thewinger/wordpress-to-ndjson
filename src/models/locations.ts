@@ -31,7 +31,7 @@ async function formatLocation({
   name,
   parent,
 }: WPLocation): Promise<ToLocation> {
-  let location: ToLocation = {
+  const location: ToLocation = {
     _type: 'localizacion',
     _id: `localizacion-${slug}`,
     title: cleanHTML(name),

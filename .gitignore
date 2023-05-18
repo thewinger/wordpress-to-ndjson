@@ -1,7 +1,10 @@
 node_modules
 build
 yarn-error.log
+log.txt
+*.log
 *.env
 files
 *.ndjson
 output*
+uploads
